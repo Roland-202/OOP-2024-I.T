@@ -1,0 +1,153 @@
+en
+conf t
+hostname IT-SW2
+line console 0
+password root
+login
+exit
+
+enable password root
+no ip domain-lookup
+banner motd $!!!NO UNAUTHORIZED ACCESS!!!$
+Service password-encryption
+do wr
+
+ip domain name ucu.net
+username Admin password root
+crypto key generate rsa
+1024
+line vty 0 15
+login local
+transport input ssh
+ip ssh version 2
+exit
+
+do wr
+ 
+
+
+int range fa0/1-2
+switchport mode trunk
+ex
+
+vlan 60
+name ServerRoom
+vlan 99
+name useless
+ex
+
+int range fa0/3-24
+switchport mode access
+switchport access vlan 60
+ex
+
+int range g0/1-2
+switchport access vlan 99
+ex
+do wr
+vlan 10
+name Sales
+vlan 20
+name HR
+vlan 30
+name Finance
+vlan 40
+name Admin
+vlan 50
+name ICT
+Vlan 60
+name ServerRoom
+ex
+do wr
+
+
+
+int range fa0/1-2
+switchport mode access
+switchport port-security
+switchport port-security maximum 2
+switchport port-security mac-address sticky
+switchport port-security violation restrict
+
+
+sh port-security
+
+
+
+$%^$#@# switch configurations
+hostname switch1
+banner motd $no unauthorised access$
+enable password cisco
+line console 0
+password cisco
+login
+line vty 0 15
+password cisco
+login
+no ip domain lookup
+ip domain-name ucu.net
+username Admin password cisco
+service password-encryption
+
+#clock set 13:30:21 february 28 2024
+management ip for the native vlan 1
+int vlan 1
+no shut
+ip address 192.168.10.1 255.255.255.0
+
+ip address default-gateway 192.168.10.1
+
+exec-timeout 4 0
+logging synchronous
+exit
+
+
+
+$$$$$$$$$$$%%^^##### router configurations same
+
+@@####$$$$$$$ vtp (vlan truking protocol)
+have a switch to act as vtp server to act as master and the client devices on switch
+
+vtp mode server
+vtp domain cisco.com
+vtp password cisco
+vtp version 2
+ex 
+do wr
+
+
+$$$$$client switch
+vtp mode client
+vtp domain  cisco.com
+vtp password cisco
+vtp version 2
+ex
+do wr
+
+$$$$$$ ssh commands$$$$$
+intefaces on the router no shut
+assigh ip address 192.168.2.1 255.255.0
+asssign devices ip addresses
+give the switch default gateway from the router
+default-gateway 192.168.10.1
+ip domain ucu.net
+enable password cisco
+Username Admin password cisco
+ip ssh version 2
+crypto key generate rsa
+1024
+ip ssh version 2
+
+line vty 0 15
+login local
+transport input ssh
+ex
+do wr
+
+command ssh -l Admin 192.168.10.1
+input passowrd
+
+
+ 
+
+
