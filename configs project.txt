@@ -148,6 +148,23 @@ command ssh -l Admin 192.168.10.1
 input passowrd
 
 
+$$$$$$dhcp%$$$$
+Define the DHCP pool:
+Router(config)# ip dhcp pool MY_POOL
+Set the network for the DHCP pool:
+Router(dhcp-config)# network 192.168.1.0 255.255.255.0
+Define the default gateway (router's IP address in that network):
+Router(dhcp-config)# default-router 192.168.1.1
+Optionally, set DNS, domain, and other configurations if needed:
+Router(dhcp-config)# dns-server 8.8.8.8
+Router(dhcp-config)# domain-name example.com
+Click on the PC.
+Go to the Desktop tab.
+Click on IP Configuration.
+Select the option DHCP, and the PC will automatically send a DHCP request to obtain an IP address.
+
+
+
  
 
 
