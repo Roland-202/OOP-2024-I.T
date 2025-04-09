@@ -1,0 +1,189 @@
+**Comprehensive Guide to Performing Examinable Tasks on Windows Server 2022**
+
+---
+
+### 1. **Installing Windows Server 2022**
+**Steps:**
+1. Insert bootable installation media (USB/DVD) and boot from it.
+2. Choose language, time, and keyboard preferences > Click "Next".
+3. Click "Install now".
+4. Select desired edition (Standard or Datacenter, with or without Desktop Experience).
+5. Accept license terms.
+6. Choose "Custom: Install Windows only (advanced)".
+7. Select or create a partition for installation > Click Next.
+8. Let the setup complete > Create Administrator password.
+
+---
+
+### 2. **Promoting the Server to a Domain Controller**
+**Steps:**
+1. Open **Server Manager**.
+2. Click **Add Roles and Features** > Role-based installation.
+3. Select server > Check **Active Directory Domain Services** > Add required features.
+4. After installation, click yellow flag > **Promote this server to a domain controller**.
+5. Select "Add a new forest" > Enter root domain name.
+6. Configure Domain Controller options (set DSRM password).
+7. Continue with DNS and NetBIOS name.
+8. Review options and install. Server will restart.
+
+---
+
+### 3. **Joining a Client Computer to a Domain**
+**Steps:**
+1. On client PC: Right-click **This PC** > Properties > Change settings.
+2. Click **Change** > Select "Domain" and enter domain name.
+3. Enter domain administrator credentials.
+4. Reboot the computer when prompted.
+
+---
+
+### 4. **Creating Users and Groups in Active Directory**
+**Steps:**
+1. Open **Active Directory Users and Computers**.
+2. Navigate to the desired Organizational Unit (OU).
+3. Right-click OU > New > User or Group.
+4. Enter details (username, password, group name, etc.).
+5. Set user permissions and group memberships as needed.
+
+---
+
+### 5. **Creating and Managing Organizational Units (OUs)**
+**Steps:**
+1. In **Active Directory Users and Computers**, right-click your domain.
+2. Select **New > Organizational Unit**.
+3. Name the OU and click OK.
+4. Drag and drop users/groups into the OU.
+
+---
+
+### 6. **Creating and Managing Group Policy Objects (GPOs)**
+**Steps:**
+1. Open **Group Policy Management Console (GPMC)**.
+2. Right-click domain or OU > Create a GPO and link it.
+3. Right-click GPO > Edit.
+4. Modify settings under **Computer Configuration** or **User Configuration**.
+5. Run `gpupdate /force` to apply.
+
+---
+
+### 7. **Installing DNS and DHCP Roles**
+**DNS:**
+1. Server Manager > Add Roles > Select **DNS Server**.
+2. After install, open **DNS Manager**.
+3. Add Forward Lookup Zone > Choose Primary zone.
+4. Enter zone name (e.g., mydomain.local).
+
+**DHCP:**
+1. Add Roles > Select **DHCP Server** > Complete wizard.
+2. Open **DHCP Manager**.
+3. Create new scope > Define IP range, subnet mask, lease duration.
+
+---
+
+### 8. **Installing and Configuring IIS (Web Server)**
+**Steps:**
+1. Server Manager > Add Roles > Select **Web Server (IIS)**.
+2. Select features like FTP, CGI, etc.
+3. After install, open **IIS Manager**.
+4. Add a site > Specify path, port, and hostname.
+5. Start the website.
+
+---
+
+### 9. **Managing User Passwords**
+**Steps:**
+1. In **Active Directory Users and Computers**, right-click user.
+2. Choose **Reset Password**.
+3. Enter and confirm new password > Optionally require password change at next logon.
+
+---
+
+### 10. **Creating and Managing Backups**
+**Steps:**
+1. Add **Windows Server Backup** via Server Manager > Features.
+2. Open **Windows Server Backup**.
+3. Choose **Backup Once** or **Backup Schedule**.
+4. Select full or incremental backup.
+5. Choose destination > Start backup.
+
+---
+
+### 11. **Restoring from Backup**
+**Steps:**
+1. Open **Windows Server Backup**.
+2. Click **Recover**.
+3. Choose backup location > Select date/time.
+4. Choose recovery type (files, volumes, system state).
+5. Complete wizard.
+
+---
+
+### 12. **Monitoring with Windows Performance Monitor**
+**Steps:**
+1. Open **Performance Monitor**.
+2. Click green plus icon to add counters.
+3. Select metrics like CPU, Disk, Memory.
+4. Monitor real-time or save to Data Collector Set.
+
+---
+
+### 13. **Using Event Viewer to Troubleshoot**
+**Steps:**
+1. Open **Event Viewer**.
+2. Check logs under **System**, **Application**, **Security**.
+3. Filter or export logs for detailed analysis.
+
+---
+
+### 14. **Configuring Firewall Rules**
+**Steps:**
+1. Open **Windows Defender Firewall with Advanced Security**.
+2. Click **Inbound/Outbound Rules** > New Rule.
+3. Choose rule type (port, program).
+4. Define scope, allow/deny, and name the rule.
+
+---
+
+### 15. **Checking IP Address and Network Info**
+**Command Prompt:**
+- `ipconfig /all`
+- `ping`, `tracert`, `nslookup` for troubleshooting
+
+---
+
+### 16. **Enabling Remote Desktop**
+**Steps:**
+1. Open **System Properties** > Remote tab.
+2. Enable "Allow remote connections".
+3. Add users to Remote Desktop Users group.
+4. Ensure port 3389 is open in firewall.
+
+---
+
+### 17. **Installing Updates on Server**
+**Steps:**
+1. Settings > Windows Update.
+2. Click "Check for updates".
+3. Download and install > Reboot if required.
+
+---
+
+### 18. **Time Synchronization (NTP)**
+**Command:**
+- `w32tm /resync`
+- Ensures Kerberos and domain authentication works properly.
+
+---
+
+### 19. **Creating Virtual Machines with Hyper-V**
+**Steps:**
+1. Add **Hyper-V Role** via Server Manager.
+2. Open **Hyper-V Manager** > New VM.
+3. Set VM name, RAM, disk, and ISO.
+4. Start VM.
+
+---
+
+These are the most examinable and administratively important tasks on Windows Server 2022.
+
+<h1>I am proud</h1>
