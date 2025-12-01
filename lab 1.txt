@@ -46,6 +46,7 @@ gpg --decrypt message.txt.gpg
 
 
 
-
+Hashing simple
+echo 'hello' | git hash-object --stdin -w
 
 
