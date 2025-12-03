@@ -1,0 +1,330 @@
+Question2 
+create file, nano monitor_server.sh
+
+```````````````````````````````````````````````````````
+#!/bin/bash
+
+# =====================================================
+# Server Monitoring Script - 	B24402
+
+
+LOG_FILE="/var/log/server_monitor.log"
+WWW_DIR="/var/www/html"
+APACHE_SERVICE="apache2"
+
+# Ensure log file exists and is writable
+sudo touch "$LOG_FILE"
+sudo chmod 664 "$LOG_FILE"
+
+echo "==========================================" | sudo tee -a "$LOG_FILE"
+echo "Monitoring run: $(date)" | sudo tee -a "$LOG_FILE"
+echo "==========================================" | sudo tee -a "$LOG_FILE"
+
+# 1. Scan for world-writable files in /var/www/html
+echo "[1] Checking for world-writable files in $WWW_DIR..." | sudo tee -a "$LOG_FILE"
+
+if find "$WWW_DIR" -type f -perm -o+w 2>/dev/null | grep -q .; then
+    echo "[WARNING] World-writable files found:" | sudo tee -a "$LOG_FILE"
+    find "$WWW_DIR" -type f -perm -o+w -exec ls -l {} \; | sudo tee -a "$LOG_FILE"
+else
+    echo "[OK] No world-writable files found in $WWW_DIR" | sudo tee -a "$LOG_FILE"
+fi
+
+# 2. Check Apache status and restart if not running
+echo "[2] Checking Apache service status..." | sudo tee -a "$LOG_FILE"
+
+if systemctl is-active --quiet "$APACHE_SERVICE"; then
+    echo "[OK] Apache is running" | sudo tee -a "$LOG_FILE"
+else
+    echo "[ERROR] Apache is NOT running! Attempting to restart..." | sudo tee -a "$LOG_FILE"
+    sudo systemctl start "$APACHE_SERVICE"
+    if systemctl is-active --quiet "$APACHE_SERVICE"; then
+        echo "[SUCCESS] Apache restarted successfully" | sudo tee -a "$LOG_FILE"
+    else
+        echo "[FAILED] Could not start Apache!" | sudo tee -a "$LOG_FILE"
+    fi
+fi
+
+# 3. Log CPU and RAM usage
+echo "[3] System Resource Usage:" | sudo tee -a "$LOG_FILE"
+
+# CPU Usage (%)
+CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')
+echo "   CPU Usage: $CPU_USAGE%" | sudo tee -a "$LOG_FILE"
+
+# RAM Usage
+TOTAL_RAM=$(free -m | awk '/Mem:/ {print $2}')
+USED_RAM=$(free -m | awk '/Mem:/ {print $3}')
+RAM_PERCENT=$(echo "scale=2; $USED_RAM*100/$TOTAL_RAM" | bc)
+echo "   RAM Usage: ${USED_RAM}MB / ${TOTAL_RAM}MB ($RAM_PERCENT%)" | sudo tee -a "$LOG_FILE"
+
+echo "Monitoring check completed at $(date)" | sudo tee -a "$LOG_FILE"
+echo "" | sudo tee -a "$LOG_FILE"
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+chmod +x monitor_server.sh
+.......................................................................
+crontab
+10 * * * * /home/b24402/monitor_server.sh
+
+.............................................................................
+./ monitor_server.sh
+..............................................................................
+sudo cat /var/log/server_monitor.log
+...............................................................................
+
+
+
+question 1
+
+sudo apt update
+sudo apt install -y ansible
+
+............................................................................
+
+# ========================================
+# STEP 1: Create project folder
+# ========================================
+mkdir -p ~/ansible-playbook/files
+cd ~/ansible-playbook
+
+# ========================================
+# STEP 2: inventory.ini (uses variables)
+# ========================================
+cat > inventory.ini << 'EOF'
+[webservers]
+localhost ansible_connection=local
+
+[webservers:vars]
+apache_package=apache2
+apache_service=apache2
+mariadb_package=mariadb-server
+mariadb_service=mariadb
+EOF
+
+# ========================================
+# STEP 3: Custom HTML page
+# ========================================
+cat > files/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ansbile Automation - UCU</title>
+    <style>body{font-family:Arial; text-align:center; margin-top:50px;}</style>
+</head>
+<body>
+    <h1>Success! Apache + MariaDB Installed by Ansible</h1>
+    <p>Playbook executed successfully using roles and variables.</p>
+    <p>Student: [Your Full Name] - Uganda Christian University</p>
+    <hr>
+    <small>ICT3116 Practical Exam – Advent 2025</small>
+</body>
+</html>
+EOF
+
+# ========================================
+# STEP 4: Create roles structure
+# ========================================
+mkdir -p roles/apache_role/tasks
+mkdir -p roles/mariadb_role/tasks
+mkdir -p roles/webcontent_role/{tasks,handlers}
+
+# ========================================
+# STEP 5: Apache Role
+# ========================================
+cat > roles/apache_role/tasks/main.yml << 'EOF'
+---
+- name: Install Apache
+  apt:
+    name: "{{ apache_package }}"
+    state: present
+    update_cache: yes
+
+- name: Ensure Apache is running and enabled
+  systemd:
+    name: "{{ apache_service }}"
+    state: started
+    enabled: yes
+EOF
+
+# ========================================
+# STEP 6: MariaDB Role (CORRECTED SERVICE NAME)
+# ========================================
+cat > roles/mariadb_role/tasks/main.yml << 'EOF'
+---
+- name: Install MariaDB
+  apt:
+    name: "{{ mariadb_package }}"
+    state: present
+
+- name: Ensure MariaDB is running and enabled
+  systemd:
+    name: "{{ mariadb_service }}"    # Correct: mariadb, not mariadb-server
+    state: started
+    enabled: yes
+EOF
+
+# ========================================
+# STEP 7: Web Content Role + Handler
+# ========================================
+cat > roles/webcontent_role/tasks/main.yml << 'EOF'
+---
+- name: Deploy custom index.html
+  copy:
+    src: index.html
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Apache
+EOF
+
+cat > roles/webcontent_role/handlers/main.yml << 'EOF'
+---
+- name: Restart Apache
+  systemd:
+    name: "{{ apache_service }}"
+    state: restarted
+EOF
+
+# ========================================
+# STEP 8: Main Playbook (uses roles + variables)
+# ========================================
+cat > install_apache_mariadb.yml << 'EOF'
+---
+- name: Deploy Apache + MariaDB + Custom Web Page (Roles + Variables)
+  hosts: webservers
+  become: yes
+  vars:
+    apache_service: "{{ apache_package }}"
+    mariadb_service: mariadb
+
+  roles:
+    - apache_role
+    - mariadb_role
+    - webcontent_role
+EOF
+
+# ========================================
+# STEP 9: Test with dry-run (THIS IS YOUR EXPECTED OUTPUT)
+# ========================================
+echo "=== DRY RUN START ==="
+ansible-playbook install_apache_mariadb.yml --check -i inventory.ini
+echo "=== DRY RUN END ==="
+
+# ========================================
+# STEP 10: (Optional) Run for real – uncomment if you want to apply
+# ========================================
+# ansible-playbook install_apache_mariadb.yml -i inventory.ini
+
+
+QUESTION 2 /2
+# ========================================
+# QUESTION 2 – FINAL & PERFECT VERSION
+# ========================================
+cd ~
+mkdir -p question2
+cd question2
+
+# ========================================
+# 1. Create the perfect monitoring script
+# ========================================
+cat > monitor_server.sh << 'EOF'
+#!/bin/bash
+
+# =====================================================
+# Server Monitoring Script
+# Student: B24402
+# Purpose: Security Service  Resource Monitoring
+# Runs every 10 minutes via cron
+# =====================================================
+
+LOG_FILE="/var/log/server_monitor.log"
+WWW_DIR="/var/www/html"
+APACHE_SERVICE="apache2"
+
+# Ensure log directory and file exist with proper permissions
+sudo mkdir -p /var/log
+sudo touch "$LOG_FILE"
+sudo chmod 664 "$LOG_FILE"
+
+# Header
+echo "==========================================" | sudo tee -a "$LOG_FILE"
+echo "Monitoring Run: $(date '+%Y-%m-%d %H:%M:%S')" | sudo tee -a "$LOG_FILE"
+echo "Hostname: $(hostname)" | sudo tee -a "$LOG_FILE"
+echo "==========================================" | sudo tee -a "$LOG_FILE"
+
+# ---------------------------------------------------------
+# 1. Check for world-writable files in /var/www/html (chmod 777 danger)
+# ---------------------------------------------------------
+echo "[1] Scanning $WWW_DIR for world-writable files..." | sudo tee -a "$LOG_FILE"
+if find "$WWW_DIR" -type f -perm -o+w 2>/dev/null | grep -q .; then
+    echo "   [WARNING] World-writable files detected:" | sudo tee -a "$LOG_FILE"
+    find "$WWW_DIR" -type f -perm -o+w -exec ls -l {} \; | sudo tee -a "$LOG_FILE"
+else
+    echo "   [OK] No world-writable files found." | sudo tee -a "$LOG_FILE"
+fi
+
+# ---------------------------------------------------------
+# 2. Check Apache status and restart if down
+# ---------------------------------------------------------
+echo "[2] Checking Apache ($APACHE_SERVICE) service..." | sudo tee -a "$LOG_FILE"
+if systemctl is-active --quiet "$APACHE_SERVICE"; then
+    echo "   [OK] Apache is running." | sudo tee -a "$LOG_FILE"
+else
+    echo "   [ERROR] Apache is NOT running! Restarting..." | sudo tee -a "$LOG_FILE"
+    sudo systemctl start "$APACHE_SERVICE" >> "$LOG_FILE" 2>&1
+    if systemctl is-active --quiet "$APACHE_SERVICE"; then
+        echo "   [SUCCESS] Apache restarted successfully." | sudo tee -a "$LOG_FILE"
+    else
+        echo "   [FAILED] Apache failed to start!" | sudo tee -a "$LOG_FILE"
+    fi
+fi
+
+# ---------------------------------------------------------
+# 3. Log current CPU and RAM usage
+# ---------------------------------------------------------
+echo "[3] System Resource Usage:" | sudo tee -a "$LOG_FILE"
+
+# CPU Usage (user + system)
+CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}' | cut -d. -f1)
+echo "   CPU Load: ${CPU_USAGE:-0}% (user + system)" | sudo tee -a "$LOG_FILE"
+
+# RAM Usage
+TOTAL_RAM=$(free -m | awk '/^Mem:/ {print $2}')
+USED_RAM=$(free -m | awk '/^Mem:/ {print $3}')
+RAM_PERCENT=$(echo "scale=1; $USED_RAM * 100 / $TOTAL_RAM" | bc 2>/dev/null || echo "0")
+
+echo "   RAM Usage: ${USED_RAM}MB / ${TOTAL_RAM}MB (${RAM_PERCENT}%)" | sudo tee -a "$LOG_FILE"
+
+# Footer
+echo "Monitoring check completed." | sudo tee -a "$LOG_FILE"
+echo "" | sudo tee -a "$LOG_FILE"
+EOF
+
+# ========================================
+# 2. Make script executable
+# ========================================
+chmod +x monitor_server.sh
+
+# ========================================
+# 3. Create crontab entry file
+# ========================================
+cat > crontab_entry.txt << 'EOF'
+# Run server monitoring script every 10 minutes
+*/10 * * * * /home/b24402/question2/monitor_server.sh
+EOF
+
+# ========================================
+# 4. Run the script once to generate real log output
+# ========================================
+sudo ./monitor_server.sh
+
+# ========================================
+# 5. Save the real log output as sample
+# ========================================
+sudo cat /var/log/server_monitor.log > sample_log_output.txt
+
+
+
